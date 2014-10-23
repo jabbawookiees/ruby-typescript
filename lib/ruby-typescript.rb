@@ -13,7 +13,7 @@ module TypeScript
 
     def node_compile(*args)
       if typescript_path
-        cmd = ['node', typescript_path] + args
+        cmd = [typescript_path] + args
       else
         cmd = ['tsc'] + args
       end
@@ -32,6 +32,15 @@ module TypeScript
       if options[:source_map]
         args << '--sourceMap'
       end
+      
+      if options[:module]
+        args << '--module' << options[:module]
+      end
+      
+      if options[:target]
+        args << '--target' << options[:target]
+      end
+
       return args
     end
 
@@ -42,6 +51,8 @@ module TypeScript
     # @param [Hash] options the options for the execution
     # @option options [String] :output the output path
     # @option options [Boolean] :source_map create the source map or not
+    # @option options [String] :module module type to compile for (commonjs or amd)
+    # @option options [String] :target the target to compile toward: ES3 (default) or ES5
     def compile_file(filepath, options={})
       options = options.clone
       if not options[:output]
