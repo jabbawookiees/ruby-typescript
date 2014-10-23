@@ -1,7 +1,7 @@
 require "open3"
 
 module TypeScript
-  VERSION = '0.1.0'
+  VERSION = '0.1.1'
 
   class Error < StandardError
   end
