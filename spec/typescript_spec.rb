@@ -23,6 +23,42 @@ describe TypeScript do
       expect(File).to exist("#{ @project_path }/test_data/good.js.map")
     end
 
+    it 'properly compiles good code with amd modules without source maps' do
+      TypeScript.compile_file("#{ @project_path }/test_data/good_using_module.ts", :module => 'amd')
+      expect(File).to exist("#{ @project_path }/test_data/good_using_module.js")
+      expect(File).not_to exist("#{ @project_path }/test_data/good_using_module.js.map")
+    end
+
+    it 'properly compiles good code with amd modules with source maps' do
+      TypeScript.compile_file("#{ @project_path }/test_data/good_using_module.ts", :source_map => true, :module => 'amd')
+      expect(File).to exist("#{ @project_path }/test_data/good_using_module.js")
+      expect(File).to exist("#{ @project_path }/test_data/good_using_module.js.map")
+    end
+
+    it 'properly compiles good code with commonjs modules without source maps' do
+      TypeScript.compile_file("#{ @project_path }/test_data/good_using_module.ts", :module => 'commonjs')
+      expect(File).to exist("#{ @project_path }/test_data/good_using_module.js")
+      expect(File).not_to exist("#{ @project_path }/test_data/good_using_module.js.map")
+    end
+
+    it 'properly compiles good code with commonjs modules with source maps' do
+      TypeScript.compile_file("#{ @project_path }/test_data/good_using_module.ts", :source_map => true, :module => 'commonjs')
+      expect(File).to exist("#{ @project_path }/test_data/good_using_module.js")
+      expect(File).to exist("#{ @project_path }/test_data/good_using_module.js.map")
+    end
+
+    it 'properly compiles good code without source maps targeting es5' do
+      TypeScript.compile_file("#{ @project_path }/test_data/es5.ts", :target => 'ES5')
+      expect(File).to exist("#{ @project_path }/test_data/es5.js")
+      expect(File).not_to exist("#{ @project_path }/test_data/es5.js.map")
+    end
+
+    it 'properly compiles good code with source maps targeting es5' do
+      TypeScript.compile_file("#{ @project_path }/test_data/es5.ts", :source_map => true, :target => 'ES5')
+      expect(File).to exist("#{ @project_path }/test_data/es5.js")
+      expect(File).to exist("#{ @project_path }/test_data/es5.js.map")
+    end
+
     it 'properly rejects bad code' do
       expect { print(TypeScript.compile_file("#{ @project_path }/test_data/bad.ts")) }.to raise_error TypeScript::Error
     end
