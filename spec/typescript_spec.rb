@@ -79,5 +79,21 @@ describe TypeScript do
       expect(File).to exist("#{ @project_path }/test_data/nested/even/deeper/target.js")
       expect(File).to exist("#{ @project_path }/test_data/nested/even/deeper/target.js.map")
     end
+    
+    it 'properly compiles references separately, if specified' do 
+      TypeScript.compile_file("#{ @project_path }/test_data/reference_user.ts", :separate => true)
+      expect(File).to exist("#{ @project_path }/test_data/reference_user.js")
+      
+      File.open("#{ @project_path }/test_data/reference_user.js", "r") do |file|
+        found = false
+        file.each_line do |line|
+          if line =~ /I am the referenced file/
+            found = true
+            break
+          end
+        end
+        expect(found).to eq(false)
+      end
+    end
   end
 end

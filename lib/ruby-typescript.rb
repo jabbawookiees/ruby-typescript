@@ -1,4 +1,5 @@
 require "open3"
+require "tempfile"
 
 module TypeScript
   VERSION = '0.1.1'
@@ -50,17 +51,38 @@ module TypeScript
     # @param [String] filepath the path to the TypeScript file
     # @param [Hash] options the options for the execution
     # @option options [String] :output the output path
+    # @option options [Boolean] :separate whether to compile separately or not
     # @option options [Boolean] :source_map create the source map or not
     # @option options [String] :module module type to compile for (commonjs or amd)
     # @option options [String] :target the target to compile toward: ES3 (default) or ES5
     def compile_file(filepath, options={})
       options = options.clone
       if not options[:output]
-        options[:output] = filepath.gsub(/\.ts$/, '.js')
+        options[:output] = filepath.gsub(/[.]ts$/, '.js')
       end
       output_filename = options[:output]
-      args = [filepath] + flatten_options(options)
-      stdout, stderr, wait_thr = node_compile(*args)
+      if options[:separate]
+        # For separate compilation, we copy to a temporary directory, compile there, then copy
+        # the result to the output path
+        options.delete(:output)
+
+        tmpfile = Tempfile.new(['rubyts', '.tsc']) 
+        begin
+          tmpfile.close
+          FileUtils.cp(filepath, tmpfile.path)
+
+          args = [tmpfile] + flatten_options(options)
+          stdout, stderr, wait_thr = node_compile(*args)
+          
+          FileUtils.mv(tmpfile.path.gsub(/[.]ts$/, '.js'), output_filename)
+        ensure
+          tmpfile.close
+          tmpfile.unlink
+        end
+      else
+        args = [filepath] + flatten_options(options)
+        stdout, stderr, wait_thr = node_compile(*args)
+      end
 
       if wait_thr.nil?
         success = stdout.empty? and stderr.empty?
