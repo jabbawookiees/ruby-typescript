@@ -79,5 +79,53 @@ describe TypeScript do
       expect(File).to exist("#{ @project_path }/test_data/nested/even/deeper/target.js")
       expect(File).to exist("#{ @project_path }/test_data/nested/even/deeper/target.js.map")
     end
+    
+    it 'properly compiles references separately, if specified' do 
+      TypeScript.compile_file("#{ @project_path }/test_data/reference_user.ts", :separate => true)
+      expect(File).to exist("#{ @project_path }/test_data/reference_user.js")
+      
+      File.open("#{ @project_path }/test_data/reference_user.js", "r") do |file|
+        found = false
+        file.each_line do |line|
+          if line =~ /I am the referenced file/
+            found = true
+            break
+          end
+        end
+        expect(found).to eq(false)
+      end
+    end
+    
+    it 'properly compiles references separately to a different folder, if specified' do 
+      TypeScript.compile_file("#{ @project_path }/test_data/reference_user.ts", :separate => true, :output => "#{ @project_path }/test_data/nested/target.js")
+      expect(File).to exist("#{ @project_path }/test_data/nested/target.js")
+      
+      File.open("#{ @project_path }/test_data/nested/target.js", "r") do |file|
+        found = false
+        file.each_line do |line|
+          if line =~ /I am the referenced file/
+            found = true
+            break
+          end
+        end
+        expect(found).to eq(false)
+      end
+    end
+
+    it 'properly compiles references together, if separate is not specified' do 
+      TypeScript.compile_file("#{ @project_path }/test_data/reference_user.ts")
+      expect(File).to exist("#{ @project_path }/test_data/reference_user.js")
+      
+      File.open("#{ @project_path }/test_data/reference_user.js", "r") do |file|
+        found = false
+        file.each_line do |line|
+          if line =~ /I am the referenced file/
+            found = true
+            break
+          end
+        end
+        expect(found).to eq(true)
+      end
+    end
   end
 end
