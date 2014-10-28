@@ -26,8 +26,12 @@ module TypeScript
 
     def flatten_options(options)
       args = []
-      if options[:output] and not options[:separate]
+      if options[:output]
         args << '--out' << options[:output]
+      end
+
+      if options[:output_dir]
+        args << '--outDir' << options[:output_dir]
       end
 
       if options[:source_map]
@@ -51,37 +55,23 @@ module TypeScript
     # @param [String] filepath the path to the TypeScript file
     # @param [Hash] options the options for the execution
     # @option options [String] :output the output path
-    # @option options [Boolean] :separate whether to compile separately or not
+    # @option options [Boolean] :output_dir the directory to output files to
     # @option options [Boolean] :source_map create the source map or not
     # @option options [String] :module module type to compile for (commonjs or amd)
     # @option options [String] :target the target to compile toward: ES3 (default) or ES5
     def compile_file(filepath, options={})
       options = options.clone
-      if not options[:output]
-        options[:output] = filepath.gsub(/[.]ts$/, '.js')
-      end
-      output_filename = options[:output]
-      if options[:separate]
-        # For separate compilation, we copy to a temporary directory, compile there, then copy
-        # the result to the output path
-        options.delete(:output)
+      if options[:output]
+        output_filename = options[:output]
+      elsif options[:output_dir]
+        filename = File.basename(filepath).gsub(/[.]ts$/, '.js')
+        output_filename = File.join(options[:output_dir], filename)
+      else
+        output_filename = filepath.gsub(/[.]ts$/, '.js')
       end
 
       args = [filepath] + flatten_options(options)
       stdout, stderr, wait_thr = node_compile(*args)
-
-      if options[:separate]
-        compiled_path = filepath.gsub(/[.]ts$/, '.js')
-        begin
-          if File.expand_path(compiled_path) != File.expand_path(output_filename)
-            FileUtils.mv(compiled_path, output_filename)
-          end
-        rescue Errno::ENOENT
-          # Happens when output_filename is on a nonexistent directory
-          FileUtils.mkdir_p File.dirname output_filename
-          FileUtils.mv(compiled_path, output_filename)
-        end
-      end
 
       if wait_thr.nil?
         success = stdout.empty? and stderr.empty?

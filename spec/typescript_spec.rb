@@ -79,40 +79,8 @@ describe TypeScript do
       expect(File).to exist("#{ @project_path }/test_data/nested/even/deeper/target.js")
       expect(File).to exist("#{ @project_path }/test_data/nested/even/deeper/target.js.map")
     end
-    
-    it 'properly compiles references separately, if specified' do 
-      TypeScript.compile_file("#{ @project_path }/test_data/reference_user.ts", :separate => true)
-      expect(File).to exist("#{ @project_path }/test_data/reference_user.js")
-      
-      File.open("#{ @project_path }/test_data/reference_user.js", "r") do |file|
-        found = false
-        file.each_line do |line|
-          if line =~ /I am the referenced file/
-            found = true
-            break
-          end
-        end
-        expect(found).to eq(false)
-      end
-    end
-    
-    it 'properly compiles references separately to a different folder, if specified' do 
-      TypeScript.compile_file("#{ @project_path }/test_data/reference_user.ts", :separate => true, :output => "#{ @project_path }/test_data/nested/target.js")
-      expect(File).to exist("#{ @project_path }/test_data/nested/target.js")
-      
-      File.open("#{ @project_path }/test_data/nested/target.js", "r") do |file|
-        found = false
-        file.each_line do |line|
-          if line =~ /I am the referenced file/
-            found = true
-            break
-          end
-        end
-        expect(found).to eq(false)
-      end
-    end
 
-    it 'properly compiles references together, if separate is not specified' do 
+    it 'properly compiles references separately if an output file is not specified' do 
       TypeScript.compile_file("#{ @project_path }/test_data/reference_user.ts")
       expect(File).to exist("#{ @project_path }/test_data/reference_user.js")
       
@@ -124,8 +92,66 @@ describe TypeScript do
             break
           end
         end
+        expect(found).to eq(false)
+      end
+    end
+
+    it 'properly compiles references together, if output is specified' do 
+      TypeScript.compile_file("#{ @project_path }/test_data/reference_user.ts", :output => "#{ @project_path }/test_data/reference_user.js")
+      expect(File).to exist("#{ @project_path }/test_data/reference_user.js")
+
+      File.open("#{ @project_path }/test_data/reference_user.js", "r") do |file|
+        found = false
+        file.each_line do |line|
+          if line =~ /I am the referenced file/
+            found = true
+            break
+          end
+        end
         expect(found).to eq(true)
       end
+    end
+
+    it 'properly compiles references separately to a different folder, if output_dir specified' do 
+      TypeScript.compile_file("#{ @project_path }/test_data/reference_user.ts", :output_dir => "#{ @project_path }/test_data/nested/")
+      expect(File).to exist("#{ @project_path }/test_data/nested/reference_user.js")
+
+      File.open("#{ @project_path }/test_data/nested/reference_user.js", "r") do |file|
+        found = false
+        file.each_line do |line|
+          if line =~ /I am the referenced file/
+            found = true
+            break
+          end
+        end
+        expect(found).to eq(false)
+      end
+    end
+
+    it 'properly creates source maps in a different folder, if output_dir specified' do 
+      TypeScript.compile_file("#{ @project_path }/test_data/reference_user.ts", :output_dir => "#{ @project_path }/test_data/nested/", :source_map => true)
+      expect(File).to exist("#{ @project_path }/test_data/nested/referenced.js")
+      expect(File).to exist("#{ @project_path }/test_data/nested/referenced.js.map")
+      expect(File).to exist("#{ @project_path }/test_data/nested/reference_user.js")
+      expect(File).to exist("#{ @project_path }/test_data/nested/reference_user.js.map")
+    end
+
+    it 'gives correct return values for things with neither :output nor :output_dir specified' do
+      result = TypeScript.compile_file("#{ @project_path }/test_data/reference_user.ts", :source_map => true)
+      expect(result[:js]).to eq("#{ @project_path }/test_data/reference_user.js")
+      expect(result[:source_map]).to eq("#{ @project_path }/test_data/reference_user.js.map")      
+    end
+
+    it 'gives correct return values for things with :output specified' do
+      result = TypeScript.compile_file("#{ @project_path }/test_data/reference_user.ts", :output => "#{ @project_path }/test_data/nested/reference_user.js", :source_map => true)
+      expect(result[:js]).to eq("#{ @project_path }/test_data/nested/reference_user.js")
+      expect(result[:source_map]).to eq("#{ @project_path }/test_data/nested/reference_user.js.map")      
+    end
+
+    it 'gives correct return values for things with :output_dir specified' do
+      result = TypeScript.compile_file("#{ @project_path }/test_data/reference_user.ts", :output_dir => "#{ @project_path }/test_data/nested/", :source_map => true)
+      expect(result[:js]).to eq("#{ @project_path }/test_data/nested/reference_user.js")
+      expect(result[:source_map]).to eq("#{ @project_path }/test_data/nested/reference_user.js.map")      
     end
   end
 end
